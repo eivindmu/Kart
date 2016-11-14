@@ -51,9 +51,9 @@ public class GUI extends javax.swing.JFrame {
     public GUI() {
         initComponents();
         try {
-            this.addMapToUI();
-            this.createWaypoints();
             this.setWaypointsButtonActionListener();
+            this.addMapToUI();
+            
         } catch (Exception ex) {
             Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -133,13 +133,17 @@ public class GUI extends javax.swing.JFrame {
          public void actionPerformed(ActionEvent e) 
          {
             JToggleButton tBtn = (JToggleButton)e.getSource();
+            HashMap<String, Object> attributes = new HashMap<>();
+            
             if (tBtn.isSelected()) 
             {
-               canSetWaypoints = true;
+                attributes.put("type", "Waypoints");
+                drawingOverlay.setUp(DrawingOverlay.DrawingMode.POINT, new SimpleMarkerSymbol(Color.BLUE, 25, SimpleMarkerSymbol.Style.CIRCLE), attributes);
+                canSetWaypoints = true;
             }
             else
             {
-               canSetWaypoints = false;
+                canSetWaypoints = false;
             }
          }
       });
@@ -147,9 +151,8 @@ public class GUI extends javax.swing.JFrame {
     
     private JComponent addMapToUI() throws Exception
     {
-        MapPanel.setLayout(new BorderLayout(0, 5));
+        MapPanel.setLayout(new BorderLayout());
         
-        // create the map using MapOptions
         map = this.createMap();
         
         MapPanel.add(map, BorderLayout.CENTER);
@@ -160,8 +163,7 @@ public class GUI extends javax.swing.JFrame {
     private JMap createMap()
     {
         JMap jMap = new JMap();
-        
-        jMap.addMapOverlay(new MouseClickedOverlay());
+        //jMap.addMapOverlay(new MouseClickedOverlay(jMap));
         
         // Sentrerer kartet i 62.4698, 6.2365 (Nørvasundet)
         // Sentreringen bør byttes til avlest posisjon fra GPS
@@ -188,10 +190,16 @@ public class GUI extends javax.swing.JFrame {
                 graphicsLayer.addGraphic(graphic);
                 if (graphic.getAttributeValue("type").equals("Waypoints")) 
                 {
-                    numberOfWaypoints++;
-                    waypoints.addFeature(graphic);
-                    graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(12, String
-                    .valueOf(numberOfWaypoints), Color.WHITE), 1));
+                    if(canSetWaypoints)
+                    {
+                        numberOfWaypoints++;
+                        waypoints.addFeature(graphic);
+                        graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(12, String.valueOf(numberOfWaypoints), Color.WHITE), 1));
+                    }
+                    else
+                    {
+                        graphicsLayer.clearSelection();
+                    }
                 }
             }
         });
@@ -199,33 +207,36 @@ public class GUI extends javax.swing.JFrame {
         return jMap;
     }
     
-    private class MouseClickedOverlay extends MapOverlay
+    /*private class MouseClickedOverlay extends MapOverlay
     {
         @Override
-    public void onMouseClicked(MouseEvent arg0) {
-      try {
-        if (!map.isReady()) {
-          return;
-        }
-      
-        java.awt.Point screenPoint = arg0.getPoint();
-        com.esri.core.geometry.Point mapPoint = map.toMapPoint(screenPoint.x, screenPoint.y);
-        
-        String decimalDegrees = "Decimal Degrees: " 
-            + CoordinateConversion.pointToDecimalDegrees(mapPoint, map.getSpatialReference(), 4);
-        
-        if(canSetWaypoints)
+        public void onMouseClicked(MouseEvent arg0) 
         {
-            System.out.println(decimalDegrees);
+            try 
+            {
+                if (!map.isReady()) 
+                {
+                    return;
+                }
+      
+                java.awt.Point screenPoint = arg0.getPoint();
+                com.esri.core.geometry.Point mapPoint = map.toMapPoint(screenPoint.x, screenPoint.y);
+        
+                String decimalDegrees = "Decimal Degrees: " + CoordinateConversion.pointToDecimalDegrees(mapPoint, map.getSpatialReference(), 4);
+        
+                if(canSetWaypoints)
+                {
+                    System.out.println(decimalDegrees);
+                }
+            }  
+            finally 
+            {
+                super.onMouseClicked(arg0);
+            }
         }
-      }  
-      finally {
-        super.onMouseClicked(arg0);
-      }
-    }
-    }
+    }*/
     
-    private void createWaypoints()
+    /*private void setUpWaypoints()
     {
         waypointsButton.addActionListener(new ActionListener() 
         {
@@ -234,13 +245,10 @@ public class GUI extends javax.swing.JFrame {
             {
                 HashMap<String, Object> attributes = new HashMap<>();
                 attributes.put("type", "Waypoints");
-                drawingOverlay.setUp(
-                    DrawingOverlay.DrawingMode.POINT,
-                    new SimpleMarkerSymbol(Color.BLUE, 25, SimpleMarkerSymbol.Style.CIRCLE),
-                    attributes);
+                drawingOverlay.setUp(DrawingOverlay.DrawingMode.POINT, new SimpleMarkerSymbol(Color.BLUE, 25, SimpleMarkerSymbol.Style.CIRCLE), attributes);
             }
         });
-    }
+    }*/
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel ControlPanel;
