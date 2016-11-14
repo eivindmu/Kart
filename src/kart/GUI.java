@@ -8,15 +8,24 @@ package kart;
 import com.esri.core.geometry.CoordinateConversion;
 import com.esri.core.geometry.Envelope;
 import com.esri.core.geometry.Point;
+import com.esri.core.map.Graphic;
+import com.esri.core.symbol.SimpleMarkerSymbol;
+import com.esri.core.symbol.TextSymbol;
+import com.esri.core.tasks.na.NAFeaturesAsFeature;
 import com.esri.map.ArcGISTiledMapServiceLayer;
 import com.esri.map.GraphicsLayer;
 import com.esri.map.JMap;
 import com.esri.map.LayerList;
 import com.esri.map.MapOverlay;
+import com.esri.toolkit.overlays.DrawingCompleteEvent;
+import com.esri.toolkit.overlays.DrawingCompleteListener;
+import com.esri.toolkit.overlays.DrawingOverlay;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
@@ -31,6 +40,10 @@ public class GUI extends javax.swing.JFrame {
     
     private JMap map;
     private GraphicsLayer graphicsLayer;
+    private boolean canSetWaypoints = false;
+    private int numberOfWaypoints = 0;
+    private NAFeaturesAsFeature waypoints = new NAFeaturesAsFeature();
+    private DrawingOverlay drawingOverlay;
 
     /**
      * Creates new form GUI
@@ -39,6 +52,7 @@ public class GUI extends javax.swing.JFrame {
         initComponents();
         try {
             this.addMapToUI();
+            this.createWaypoints();
             this.setWaypointsButtonActionListener();
         } catch (Exception ex) {
             Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -121,7 +135,11 @@ public class GUI extends javax.swing.JFrame {
             JToggleButton tBtn = (JToggleButton)e.getSource();
             if (tBtn.isSelected()) 
             {
-               System.out.println("button selected");
+               canSetWaypoints = true;
+            }
+            else
+            {
+               canSetWaypoints = false;
             }
          }
       });
@@ -157,6 +175,26 @@ public class GUI extends javax.swing.JFrame {
         LayerList layers = jMap.getLayers();
         layers.add(tiledLayer);
         layers.add(graphicsLayer);
+        
+        drawingOverlay = new DrawingOverlay();
+        jMap.addMapOverlay(drawingOverlay);
+        drawingOverlay.setActive(true);
+        drawingOverlay.addDrawingCompleteListener(new DrawingCompleteListener() 
+        {
+            @Override
+            public void drawingCompleted(DrawingCompleteEvent arg0) 
+            {
+                Graphic graphic = (Graphic) drawingOverlay.getAndClearFeature();
+                graphicsLayer.addGraphic(graphic);
+                if (graphic.getAttributeValue("type").equals("Waypoints")) 
+                {
+                    numberOfWaypoints++;
+                    waypoints.addFeature(graphic);
+                    graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(12, String
+                    .valueOf(numberOfWaypoints), Color.WHITE), 1));
+                }
+            }
+        });
 
         return jMap;
     }
@@ -174,15 +212,36 @@ public class GUI extends javax.swing.JFrame {
         com.esri.core.geometry.Point mapPoint = map.toMapPoint(screenPoint.x, screenPoint.y);
         
         String decimalDegrees = "Decimal Degrees: " 
-            + CoordinateConversion.pointToDecimalDegrees(mapPoint, map.getSpatialReference(), 2);
+            + CoordinateConversion.pointToDecimalDegrees(mapPoint, map.getSpatialReference(), 4);
         
-          System.out.println(decimalDegrees);
+        if(canSetWaypoints)
+        {
+            System.out.println(decimalDegrees);
+        }
       }  
       finally {
         super.onMouseClicked(arg0);
       }
     }
     }
+    
+    private void createWaypoints()
+    {
+        waypointsButton.addActionListener(new ActionListener() 
+        {
+            @Override
+            public void actionPerformed(ActionEvent e) 
+            {
+                HashMap<String, Object> attributes = new HashMap<>();
+                attributes.put("type", "Waypoints");
+                drawingOverlay.setUp(
+                    DrawingOverlay.DrawingMode.POINT,
+                    new SimpleMarkerSymbol(Color.BLUE, 25, SimpleMarkerSymbol.Style.CIRCLE),
+                    attributes);
+            }
+        });
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel ControlPanel;
     private javax.swing.JPanel MapPanel;
