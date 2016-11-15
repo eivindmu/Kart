@@ -16,6 +16,7 @@ import com.esri.map.ArcGISTiledMapServiceLayer;
 import com.esri.map.GraphicsLayer;
 import com.esri.map.JMap;
 import com.esri.map.LayerList;
+import com.esri.map.MapOptions;
 import com.esri.map.MapOverlay;
 import com.esri.toolkit.overlays.DrawingCompleteEvent;
 import com.esri.toolkit.overlays.DrawingCompleteListener;
@@ -153,14 +154,53 @@ public class GUI extends javax.swing.JFrame {
     {
         MapPanel.setLayout(new BorderLayout());
         
-        map = this.createMap();
+        this.createMap();
+        
+        //map = this.createMap();
         
         MapPanel.add(map, BorderLayout.CENTER);
         
         return MapPanel;
     }
     
-    private JMap createMap()
+    private void createMap()
+    {
+        MapOptions mapOptions = new MapOptions(MapOptions.MapType.TOPO, 62.4698, 6.2365, 14);
+        map = new JMap(mapOptions);
+        
+        graphicsLayer = new GraphicsLayer();
+        
+        LayerList layers = map.getLayers();
+        layers.add(graphicsLayer);
+        
+        drawingOverlay = new DrawingOverlay();
+        map.addMapOverlay(drawingOverlay);
+        drawingOverlay.setActive(true);
+        drawingOverlay.addDrawingCompleteListener(new DrawingCompleteListener()
+        {
+            @Override
+            public void drawingCompleted(DrawingCompleteEvent arg0) 
+            {
+                Graphic graphic = (Graphic) drawingOverlay.getAndClearFeature();
+                graphicsLayer.addGraphic(graphic);
+                if (graphic.getAttributeValue("type").equals("Waypoints")) 
+                {
+                    if(canSetWaypoints)
+                    {
+                        numberOfWaypoints++;
+                        waypoints.addFeature(graphic);
+                        graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(12, String.valueOf(numberOfWaypoints), Color.WHITE), 1));
+                    }
+                    else
+                    {
+                        graphicsLayer.clearSelection();
+                    }
+                }
+            }
+        });
+    }
+    
+    /*private JMap createMap()
     {
         JMap jMap = new JMap();
         //jMap.addMapOverlay(new MouseClickedOverlay(jMap));
@@ -172,7 +212,7 @@ public class GUI extends javax.swing.JFrame {
         // add base layer
         ArcGISTiledMapServiceLayer tiledLayer = new ArcGISTiledMapServiceLayer("http://services.arcgisonline.com/ArcGIS/rest/services/ESRI_StreetMap_World_2D/MapServer");
         // Waypoints layer
-        graphicsLayer = new GraphicsLayer();
+        graphicsLayer = new GraphicsLayer(); 
         
         LayerList layers = jMap.getLayers();
         layers.add(tiledLayer);
@@ -205,7 +245,7 @@ public class GUI extends javax.swing.JFrame {
         });
 
         return jMap;
-    }
+    }*/
     
     /*private class MouseClickedOverlay extends MapOverlay
     {
