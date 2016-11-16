@@ -5,6 +5,8 @@
  */
 package kart;
 
+import com.esri.core.geometry.CoordinateConversion;
+import com.esri.core.geometry.Point;
 import com.esri.core.map.Graphic;
 import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.esri.core.symbol.TextSymbol;
@@ -13,13 +15,17 @@ import com.esri.map.GraphicsLayer;
 import com.esri.map.JMap;
 import com.esri.map.LayerList;
 import com.esri.map.MapOptions;
+import com.esri.map.MapOverlay;
 import com.esri.toolkit.overlays.DrawingCompleteEvent;
 import com.esri.toolkit.overlays.DrawingCompleteListener;
 import com.esri.toolkit.overlays.DrawingOverlay;
+import com.esri.toolkit.overlays.NavigatorOverlay;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,6 +58,117 @@ public class GUI extends javax.swing.JFrame {
             Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    
+    private JComponent addMapToUI() throws Exception
+    {
+        MapPanel.setLayout(new BorderLayout());
+        
+        this.createMap();
+        
+        MapPanel.add(map, BorderLayout.CENTER);
+        
+        return MapPanel;
+    }
+    
+    private void createMap()
+    {
+        MapOptions mapOptions = new MapOptions(MapOptions.MapType.TOPO, 62.4698, 6.2365, 14);
+        map = new JMap(mapOptions);
+        
+        map.addMapOverlay(new NavigatorOverlay());
+        
+        graphicsLayer = new GraphicsLayer();
+        
+        LayerList layers = map.getLayers();
+        layers.add(graphicsLayer);
+        
+        drawingOverlay = new DrawingOverlay();
+        map.addMapOverlay(drawingOverlay);
+        drawingOverlay.setActive(true);
+        drawingOverlay.addDrawingCompleteListener(new DrawingCompleteListener()
+        {
+            @Override
+            public void drawingCompleted(DrawingCompleteEvent arg0) 
+            {
+                Graphic graphic = (Graphic) drawingOverlay.getAndClearFeature();
+                graphicsLayer.addGraphic(graphic);
+                if (graphic.getAttributeValue("type").equals("Waypoints")) 
+                {
+                    numberOfWaypoints++;
+                    waypoints.addFeature(graphic);
+                    graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(10, String.valueOf(numberOfWaypoints), Color.WHITE), 1));
+                }
+            }
+        });
+    }
+    
+    private void setWaypointsButtonActionListener()
+    {
+        waypointsButton.addActionListener(new ActionListener() {
+
+         public void actionPerformed(ActionEvent e) 
+         {
+            JToggleButton tBtn = (JToggleButton) e.getSource();
+            HashMap<String, Object> attributes = new HashMap<>();
+            
+            if (tBtn.isSelected()) 
+            {
+                attributes.put("type", "Waypoints");
+                drawingOverlay.setUp(DrawingOverlay.DrawingMode.POINT, new SimpleMarkerSymbol(Color.BLUE, 15, SimpleMarkerSymbol.Style.CIRCLE), attributes);
+                map.addMapOverlay(new MouseClickedOverlay());
+            }
+            else
+            {
+                attributes.clear();
+                drawingOverlay.setUp(DrawingOverlay.DrawingMode.NONE, new SimpleMarkerSymbol(Color.BLUE, 15, SimpleMarkerSymbol.Style.CIRCLE), attributes);
+            }
+         }
+      });
+    }
+    
+    private void setResetWaypointsButtonActionListener()
+    {
+        resetWaypointsButton.addActionListener(new ActionListener() {
+            
+            public void actionPerformed(ActionEvent e)
+            {
+                numberOfWaypoints = 0;
+                graphicsLayer.removeAll();
+            }
+        });
+    }
+    
+    private class MouseClickedOverlay extends MapOverlay {
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public void onMouseClicked(MouseEvent e) {
+      try {
+        if (!map.isReady()) {
+          return;
+        }
+        
+        /*int x = e.getX();
+        int y = e.getY();
+        
+        double doubleX = new Integer(x).doubleValue();
+        double doubleY = new Integer(y).doubleValue();
+        
+        com.esri.core.geometry.Point mapPoint = new Point(doubleX, doubleY);*/
+        
+        
+          java.awt.Point screenPoint = e.getPoint();
+          com.esri.core.geometry.Point mapPoint = map.toMapPoint(screenPoint.x, screenPoint.y);
+        
+          String decimalDegrees = "Decimal Degrees: " + CoordinateConversion.pointToDecimalDegrees(mapPoint, map.getSpatialReference(), 4);
+          
+          System.out.println(decimalDegrees);
+
+      } finally {
+        super.onMouseMoved(e);
+      }
+    }
+  }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -126,82 +243,6 @@ public class GUI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private JComponent addMapToUI() throws Exception
-    {
-        MapPanel.setLayout(new BorderLayout());
-        
-        this.createMap();
-        
-        MapPanel.add(map, BorderLayout.CENTER);
-        
-        return MapPanel;
-    }
-    
-    private void createMap()
-    {
-        MapOptions mapOptions = new MapOptions(MapOptions.MapType.TOPO, 62.4698, 6.2365, 14);
-        map = new JMap(mapOptions);
-        
-        graphicsLayer = new GraphicsLayer();
-        
-        LayerList layers = map.getLayers();
-        layers.add(graphicsLayer);
-        
-        drawingOverlay = new DrawingOverlay();
-        map.addMapOverlay(drawingOverlay);
-        drawingOverlay.setActive(true);
-        drawingOverlay.addDrawingCompleteListener(new DrawingCompleteListener()
-        {
-            @Override
-            public void drawingCompleted(DrawingCompleteEvent arg0) 
-            {
-                Graphic graphic = (Graphic) drawingOverlay.getAndClearFeature();
-                graphicsLayer.addGraphic(graphic);
-                if (graphic.getAttributeValue("type").equals("Waypoints")) 
-                {
-                    numberOfWaypoints++;
-                    waypoints.addFeature(graphic);
-                    graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(10, String.valueOf(numberOfWaypoints), Color.WHITE), 1));
-                }
-            }
-        });
-    }
-    
-    private void setWaypointsButtonActionListener()
-    {
-        waypointsButton.addActionListener(new ActionListener() {
-
-         public void actionPerformed(ActionEvent e) 
-         {
-            JToggleButton tBtn = (JToggleButton) e.getSource();
-            HashMap<String, Object> attributes = new HashMap<>();
-            
-            if (tBtn.isSelected()) 
-            {
-                attributes.put("type", "Waypoints");
-                drawingOverlay.setUp(DrawingOverlay.DrawingMode.POINT, new SimpleMarkerSymbol(Color.BLUE, 15, SimpleMarkerSymbol.Style.CIRCLE), attributes);
-            }
-            else
-            {
-                attributes.clear();
-                drawingOverlay.setUp(DrawingOverlay.DrawingMode.NONE, new SimpleMarkerSymbol(Color.BLUE, 15, SimpleMarkerSymbol.Style.CIRCLE), attributes);
-            }
-         }
-      });
-    }
-    
-    private void setResetWaypointsButtonActionListener()
-    {
-        resetWaypointsButton.addActionListener(new ActionListener() {
-            
-            public void actionPerformed(ActionEvent e)
-            {
-                numberOfWaypoints = 0;
-                graphicsLayer.removeAll();
-            }
-        });
-    }
-    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel ControlPanel;
     private javax.swing.JPanel MapPanel;
