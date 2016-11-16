@@ -139,12 +139,12 @@ public class GUI extends javax.swing.JFrame {
             if (tBtn.isSelected()) 
             {
                 attributes.put("type", "Waypoints");
-                drawingOverlay.setUp(DrawingOverlay.DrawingMode.POINT, new SimpleMarkerSymbol(Color.BLUE, 25, SimpleMarkerSymbol.Style.CIRCLE), attributes);
-                canSetWaypoints = true;
+                drawingOverlay.setUp(DrawingOverlay.DrawingMode.POINT, new SimpleMarkerSymbol(Color.BLUE, 15, SimpleMarkerSymbol.Style.CIRCLE), attributes);
             }
             else
             {
-                canSetWaypoints = false;
+                attributes.clear();
+                drawingOverlay.setUp(DrawingOverlay.DrawingMode.NONE, new SimpleMarkerSymbol(Color.BLUE, 15, SimpleMarkerSymbol.Style.CIRCLE), attributes);
             }
          }
       });
@@ -155,8 +155,6 @@ public class GUI extends javax.swing.JFrame {
         MapPanel.setLayout(new BorderLayout());
         
         this.createMap();
-        
-        //map = this.createMap();
         
         MapPanel.add(map, BorderLayout.CENTER);
         
@@ -185,110 +183,13 @@ public class GUI extends javax.swing.JFrame {
                 graphicsLayer.addGraphic(graphic);
                 if (graphic.getAttributeValue("type").equals("Waypoints")) 
                 {
-                    if(canSetWaypoints)
-                    {
-                        numberOfWaypoints++;
-                        waypoints.addFeature(graphic);
-                        graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(12, String.valueOf(numberOfWaypoints), Color.WHITE), 1));
-                    }
-                    else
-                    {
-                        graphicsLayer.clearSelection();
-                    }
+                    numberOfWaypoints++;
+                    waypoints.addFeature(graphic);
+                    graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(10, String.valueOf(numberOfWaypoints), Color.WHITE), 1));
                 }
             }
         });
     }
-    
-    /*private JMap createMap()
-    {
-        JMap jMap = new JMap();
-        //jMap.addMapOverlay(new MouseClickedOverlay(jMap));
-        
-        // Sentrerer kartet i 62.4698, 6.2365 (Nørvasundet)
-        // Sentreringen bør byttes til avlest posisjon fra GPS
-        jMap.setExtent(new Envelope(new Point(6.2365, 62.4698), 0.025, 0.025));
-        
-        // add base layer
-        ArcGISTiledMapServiceLayer tiledLayer = new ArcGISTiledMapServiceLayer("http://services.arcgisonline.com/ArcGIS/rest/services/ESRI_StreetMap_World_2D/MapServer");
-        // Waypoints layer
-        graphicsLayer = new GraphicsLayer(); 
-        
-        LayerList layers = jMap.getLayers();
-        layers.add(tiledLayer);
-        layers.add(graphicsLayer);
-        
-        drawingOverlay = new DrawingOverlay();
-        jMap.addMapOverlay(drawingOverlay);
-        drawingOverlay.setActive(true);
-        drawingOverlay.addDrawingCompleteListener(new DrawingCompleteListener() 
-        {
-            @Override
-            public void drawingCompleted(DrawingCompleteEvent arg0) 
-            {
-                Graphic graphic = (Graphic) drawingOverlay.getAndClearFeature();
-                graphicsLayer.addGraphic(graphic);
-                if (graphic.getAttributeValue("type").equals("Waypoints")) 
-                {
-                    if(canSetWaypoints)
-                    {
-                        numberOfWaypoints++;
-                        waypoints.addFeature(graphic);
-                        graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(12, String.valueOf(numberOfWaypoints), Color.WHITE), 1));
-                    }
-                    else
-                    {
-                        graphicsLayer.clearSelection();
-                    }
-                }
-            }
-        });
-
-        return jMap;
-    }*/
-    
-    /*private class MouseClickedOverlay extends MapOverlay
-    {
-        @Override
-        public void onMouseClicked(MouseEvent arg0) 
-        {
-            try 
-            {
-                if (!map.isReady()) 
-                {
-                    return;
-                }
-      
-                java.awt.Point screenPoint = arg0.getPoint();
-                com.esri.core.geometry.Point mapPoint = map.toMapPoint(screenPoint.x, screenPoint.y);
-        
-                String decimalDegrees = "Decimal Degrees: " + CoordinateConversion.pointToDecimalDegrees(mapPoint, map.getSpatialReference(), 4);
-        
-                if(canSetWaypoints)
-                {
-                    System.out.println(decimalDegrees);
-                }
-            }  
-            finally 
-            {
-                super.onMouseClicked(arg0);
-            }
-        }
-    }*/
-    
-    /*private void setUpWaypoints()
-    {
-        waypointsButton.addActionListener(new ActionListener() 
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) 
-            {
-                HashMap<String, Object> attributes = new HashMap<>();
-                attributes.put("type", "Waypoints");
-                drawingOverlay.setUp(DrawingOverlay.DrawingMode.POINT, new SimpleMarkerSymbol(Color.BLUE, 25, SimpleMarkerSymbol.Style.CIRCLE), attributes);
-            }
-        });
-    }*/
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel ControlPanel;
