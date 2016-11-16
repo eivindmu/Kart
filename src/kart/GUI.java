@@ -5,19 +5,14 @@
  */
 package kart;
 
-import com.esri.core.geometry.CoordinateConversion;
-import com.esri.core.geometry.Envelope;
-import com.esri.core.geometry.Point;
 import com.esri.core.map.Graphic;
 import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.esri.core.symbol.TextSymbol;
 import com.esri.core.tasks.na.NAFeaturesAsFeature;
-import com.esri.map.ArcGISTiledMapServiceLayer;
 import com.esri.map.GraphicsLayer;
 import com.esri.map.JMap;
 import com.esri.map.LayerList;
 import com.esri.map.MapOptions;
-import com.esri.map.MapOverlay;
 import com.esri.toolkit.overlays.DrawingCompleteEvent;
 import com.esri.toolkit.overlays.DrawingCompleteListener;
 import com.esri.toolkit.overlays.DrawingOverlay;
@@ -25,12 +20,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
 /**
@@ -41,7 +34,6 @@ public class GUI extends javax.swing.JFrame {
     
     private JMap map;
     private GraphicsLayer graphicsLayer;
-    private boolean canSetWaypoints = false;
     private int numberOfWaypoints = 0;
     private NAFeaturesAsFeature waypoints = new NAFeaturesAsFeature();
     private DrawingOverlay drawingOverlay;
@@ -53,6 +45,7 @@ public class GUI extends javax.swing.JFrame {
         initComponents();
         try {
             this.setWaypointsButtonActionListener();
+            this.setResetWaypointsButtonActionListener();
             this.addMapToUI();
             
         } catch (Exception ex) {
@@ -72,6 +65,7 @@ public class GUI extends javax.swing.JFrame {
         MapPanel = new javax.swing.JPanel();
         ControlPanel = new javax.swing.JPanel();
         waypointsButton = new javax.swing.JToggleButton();
+        resetWaypointsButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -90,17 +84,22 @@ public class GUI extends javax.swing.JFrame {
 
         waypointsButton.setText("Set Waypoints");
 
+        resetWaypointsButton.setText("Reset Waypoints");
+
         javax.swing.GroupLayout ControlPanelLayout = new javax.swing.GroupLayout(ControlPanel);
         ControlPanel.setLayout(ControlPanelLayout);
         ControlPanelLayout.setHorizontalGroup(
             ControlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(waypointsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 188, Short.MAX_VALUE)
+            .addComponent(resetWaypointsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         ControlPanelLayout.setVerticalGroup(
             ControlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(ControlPanelLayout.createSequentialGroup()
                 .addComponent(waypointsButton)
-                .addContainerGap(478, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(resetWaypointsButton)
+                .addContainerGap(440, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -127,29 +126,6 @@ public class GUI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void setWaypointsButtonActionListener()
-    {
-        waypointsButton.addActionListener(new ActionListener() {
-
-         public void actionPerformed(ActionEvent e) 
-         {
-            JToggleButton tBtn = (JToggleButton)e.getSource();
-            HashMap<String, Object> attributes = new HashMap<>();
-            
-            if (tBtn.isSelected()) 
-            {
-                attributes.put("type", "Waypoints");
-                drawingOverlay.setUp(DrawingOverlay.DrawingMode.POINT, new SimpleMarkerSymbol(Color.BLUE, 15, SimpleMarkerSymbol.Style.CIRCLE), attributes);
-            }
-            else
-            {
-                attributes.clear();
-                drawingOverlay.setUp(DrawingOverlay.DrawingMode.NONE, new SimpleMarkerSymbol(Color.BLUE, 15, SimpleMarkerSymbol.Style.CIRCLE), attributes);
-            }
-         }
-      });
-    }
-    
     private JComponent addMapToUI() throws Exception
     {
         MapPanel.setLayout(new BorderLayout());
@@ -191,9 +167,45 @@ public class GUI extends javax.swing.JFrame {
         });
     }
     
+    private void setWaypointsButtonActionListener()
+    {
+        waypointsButton.addActionListener(new ActionListener() {
+
+         public void actionPerformed(ActionEvent e) 
+         {
+            JToggleButton tBtn = (JToggleButton) e.getSource();
+            HashMap<String, Object> attributes = new HashMap<>();
+            
+            if (tBtn.isSelected()) 
+            {
+                attributes.put("type", "Waypoints");
+                drawingOverlay.setUp(DrawingOverlay.DrawingMode.POINT, new SimpleMarkerSymbol(Color.BLUE, 15, SimpleMarkerSymbol.Style.CIRCLE), attributes);
+            }
+            else
+            {
+                attributes.clear();
+                drawingOverlay.setUp(DrawingOverlay.DrawingMode.NONE, new SimpleMarkerSymbol(Color.BLUE, 15, SimpleMarkerSymbol.Style.CIRCLE), attributes);
+            }
+         }
+      });
+    }
+    
+    private void setResetWaypointsButtonActionListener()
+    {
+        resetWaypointsButton.addActionListener(new ActionListener() {
+            
+            public void actionPerformed(ActionEvent e)
+            {
+                numberOfWaypoints = 0;
+                graphicsLayer.removeAll();
+            }
+        });
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel ControlPanel;
     private javax.swing.JPanel MapPanel;
+    private javax.swing.JButton resetWaypointsButton;
     private javax.swing.JToggleButton waypointsButton;
     // End of variables declaration//GEN-END:variables
 }

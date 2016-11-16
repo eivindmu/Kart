@@ -76,13 +76,16 @@
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
               <Component id="waypointsButton" alignment="0" pref="188" max="32767" attributes="0"/>
+              <Component id="resetWaypointsButton" alignment="0" max="32767" attributes="0"/>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
                   <Component id="waypointsButton" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace pref="478" max="32767" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="resetWaypointsButton" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace pref="440" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -91,6 +94,11 @@
         <Component class="javax.swing.JToggleButton" name="waypointsButton">
           <Properties>
             <Property name="text" type="java.lang.String" value="Set Waypoints"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="resetWaypointsButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Reset Waypoints"/>
           </Properties>
         </Component>
       </SubComponents>
