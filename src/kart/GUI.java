@@ -27,6 +27,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
@@ -43,6 +44,7 @@ public class GUI extends javax.swing.JFrame {
     private int numberOfWaypoints = 0;
     private NAFeaturesAsFeature waypoints = new NAFeaturesAsFeature();
     private DrawingOverlay drawingOverlay;
+    private HashMap<String, List<Float>> waypointCoordinates;
 
     /**
      * Creates new form GUI
@@ -50,6 +52,8 @@ public class GUI extends javax.swing.JFrame {
     public GUI() {
         initComponents();
         try {
+            waypointCoordinates = new HashMap<>();
+            
             this.setWaypointsButtonActionListener();
             this.setResetWaypointsButtonActionListener();
             this.addMapToUI();
@@ -94,7 +98,7 @@ public class GUI extends javax.swing.JFrame {
                 graphicsLayer.addGraphic(graphic);
                 if (graphic.getAttributeValue("type").equals("Waypoints")) 
                 {
-                    numberOfWaypoints++;
+                    //numberOfWaypoints++;
                     waypoints.addFeature(graphic);
                     graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(10, String.valueOf(numberOfWaypoints), Color.WHITE), 1));
                 }
@@ -148,21 +152,18 @@ public class GUI extends javax.swing.JFrame {
           return;
         }
         
-        /*int x = e.getX();
-        int y = e.getY();
+        numberOfWaypoints++;
         
-        double doubleX = new Integer(x).doubleValue();
-        double doubleY = new Integer(y).doubleValue();
+        java.awt.Point screenPoint = e.getPoint();
+        com.esri.core.geometry.Point mapPoint = map.toMapPoint(screenPoint.x, screenPoint.y);
         
-        com.esri.core.geometry.Point mapPoint = new Point(doubleX, doubleY);*/
-        
-        
-          java.awt.Point screenPoint = e.getPoint();
-          com.esri.core.geometry.Point mapPoint = map.toMapPoint(screenPoint.x, screenPoint.y);
-        
-          String decimalDegrees = "Decimal Degrees: " + CoordinateConversion.pointToDecimalDegrees(mapPoint, map.getSpatialReference(), 4);
+        String decimalDegrees = CoordinateConversion.pointToDecimalDegrees(mapPoint, map.getSpatialReference(), 4);
           
-          System.out.println(decimalDegrees);
+        MapPointToFloatParser parser = new MapPointToFloatParser(decimalDegrees);
+        waypointCoordinates.put("Waypoint " + numberOfWaypoints, parser.parseMapPoint());
+        
+        System.out.println("Waypoint " + numberOfWaypoints + " "+ waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(0) 
+                + "N " + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(1) + "E");
 
       } finally {
         super.onMouseMoved(e);
