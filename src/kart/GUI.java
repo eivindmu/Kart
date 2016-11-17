@@ -6,10 +6,12 @@
 package kart;
 
 import com.esri.core.geometry.CoordinateConversion;
+import com.esri.core.geometry.Polyline;
 import com.esri.core.map.Graphic;
+import com.esri.core.symbol.SimpleLineSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol;
+import com.esri.core.symbol.Symbol;
 import com.esri.core.symbol.TextSymbol;
-import com.esri.core.tasks.na.NAFeaturesAsFeature;
 import com.esri.map.GraphicsLayer;
 import com.esri.map.JMap;
 import com.esri.map.LayerList;
@@ -40,11 +42,12 @@ public class GUI extends javax.swing.JFrame {
     private JMap map;
     private GraphicsLayer graphicsLayer;
     private int numberOfWaypoints = 0;
-    private NAFeaturesAsFeature waypoints = new NAFeaturesAsFeature();
     private DrawingOverlay drawingOverlay;
     private HashMap<String, List<Float>> waypointCoordinates;
     private boolean canSetWaypoints = false;
     private MouseClickedOverlay mco;
+    private Symbol waypoint;
+    private Symbol routeLine;
 
     /**
      * Creates new form GUI
@@ -54,6 +57,8 @@ public class GUI extends javax.swing.JFrame {
         try {
             waypointCoordinates = new HashMap<>();
             mco = new MouseClickedOverlay();
+            waypoint = new SimpleMarkerSymbol(Color.RED, 15, SimpleMarkerSymbol.Style.CIRCLE);
+            routeLine = new SimpleLineSymbol(Color.RED, 5, SimpleLineSymbol.Style.SOLID);
             
             this.setWaypointsButtonActionListener();
             this.setResetWaypointsButtonActionListener();
@@ -97,10 +102,25 @@ public class GUI extends javax.swing.JFrame {
             {
                 Graphic graphic = (Graphic) drawingOverlay.getAndClearFeature();
                 graphicsLayer.addGraphic(graphic);
+                
                 if (graphic.getAttributeValue("type").equals("Waypoints")) 
                 {
-                    waypoints.addFeature(graphic);
                     graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(10, String.valueOf(numberOfWaypoints), Color.WHITE), 1));
+                    
+                    if(numberOfWaypoints > 1)
+                    {
+                        Polyline polyline = new Polyline();
+                        polyline.startPath(waypointCoordinates.get("Waypoint " + (numberOfWaypoints - 1)).get(1), waypointCoordinates.get("Waypoint " + (numberOfWaypoints - 1)).get(0));
+                        polyline.lineTo(waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(1), waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(0));
+                        
+                        System.out.println(waypointCoordinates.get("Waypoint " + (numberOfWaypoints - 1)).get(1) + " " + waypointCoordinates.get("Waypoint " + (numberOfWaypoints - 1)).get(0));
+                        System.out.println(waypointCoordinates.get("Waypoint " + (numberOfWaypoints)).get(1) + " " + waypointCoordinates.get("Waypoint " + (numberOfWaypoints)).get(0));
+                        
+                        System.out.println("Polyline length: " + polyline.calculateLength2D());
+                        
+                        Graphic lineGraphic = new Graphic(polyline, routeLine, 1);
+                        graphicsLayer.addGraphic(lineGraphic);
+                    }
                 }
             }
         });
@@ -120,14 +140,14 @@ public class GUI extends javax.swing.JFrame {
             {
                 canSetWaypoints = true;
                 attributes.put("type", "Waypoints");
-                drawingOverlay.setUp(DrawingOverlay.DrawingMode.POINT, new SimpleMarkerSymbol(Color.BLUE, 15, SimpleMarkerSymbol.Style.CIRCLE), attributes);
+                drawingOverlay.setUp(DrawingOverlay.DrawingMode.POINT, waypoint, attributes);
                 map.addMapOverlay(mco);
             }
             else
             {
                 canSetWaypoints = false;
                 attributes.clear();
-                drawingOverlay.setUp(DrawingOverlay.DrawingMode.NONE, new SimpleMarkerSymbol(Color.BLUE, 15, SimpleMarkerSymbol.Style.CIRCLE), attributes);
+                drawingOverlay.setUp(DrawingOverlay.DrawingMode.NONE, waypoint, attributes);
                 map.removeMapOverlay(mco);
             }
          }
@@ -151,7 +171,7 @@ public class GUI extends javax.swing.JFrame {
 
     @Override
     public void onMouseClicked(MouseEvent e) {
-      //try {
+      try {
         if (!map.isReady()) {
           return;
         }
@@ -170,15 +190,13 @@ public class GUI extends javax.swing.JFrame {
         
             System.out.println("Waypoint " + numberOfWaypoints + " "+ waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(0) 
                 + "N " + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(1) + "E");
-            
-            super.onMouseClicked(e);
         }
 
-      } //finally {
-        //super.onMouseClicked(e);
+      } finally {
+        super.onMouseClicked(e);
       }
-    //}
-  //}
+    }
+  }
 
     /**
      * This method is called from within the constructor to initialize the form.
