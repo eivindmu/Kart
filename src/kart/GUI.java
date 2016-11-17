@@ -6,7 +6,6 @@
 package kart;
 
 import com.esri.core.geometry.CoordinateConversion;
-import com.esri.core.geometry.Point;
 import com.esri.core.map.Graphic;
 import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.esri.core.symbol.TextSymbol;
@@ -25,7 +24,6 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
@@ -45,6 +43,8 @@ public class GUI extends javax.swing.JFrame {
     private NAFeaturesAsFeature waypoints = new NAFeaturesAsFeature();
     private DrawingOverlay drawingOverlay;
     private HashMap<String, List<Float>> waypointCoordinates;
+    private boolean canSetWaypoints = false;
+    private MouseClickedOverlay mco;
 
     /**
      * Creates new form GUI
@@ -53,6 +53,7 @@ public class GUI extends javax.swing.JFrame {
         initComponents();
         try {
             waypointCoordinates = new HashMap<>();
+            mco = new MouseClickedOverlay();
             
             this.setWaypointsButtonActionListener();
             this.setResetWaypointsButtonActionListener();
@@ -98,7 +99,6 @@ public class GUI extends javax.swing.JFrame {
                 graphicsLayer.addGraphic(graphic);
                 if (graphic.getAttributeValue("type").equals("Waypoints")) 
                 {
-                    //numberOfWaypoints++;
                     waypoints.addFeature(graphic);
                     graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(10, String.valueOf(numberOfWaypoints), Color.WHITE), 1));
                 }
@@ -115,16 +115,20 @@ public class GUI extends javax.swing.JFrame {
             JToggleButton tBtn = (JToggleButton) e.getSource();
             HashMap<String, Object> attributes = new HashMap<>();
             
+            
             if (tBtn.isSelected()) 
             {
+                canSetWaypoints = true;
                 attributes.put("type", "Waypoints");
                 drawingOverlay.setUp(DrawingOverlay.DrawingMode.POINT, new SimpleMarkerSymbol(Color.BLUE, 15, SimpleMarkerSymbol.Style.CIRCLE), attributes);
-                map.addMapOverlay(new MouseClickedOverlay());
+                map.addMapOverlay(mco);
             }
             else
             {
+                canSetWaypoints = false;
                 attributes.clear();
                 drawingOverlay.setUp(DrawingOverlay.DrawingMode.NONE, new SimpleMarkerSymbol(Color.BLUE, 15, SimpleMarkerSymbol.Style.CIRCLE), attributes);
+                map.removeMapOverlay(mco);
             }
          }
       });
@@ -138,38 +142,43 @@ public class GUI extends javax.swing.JFrame {
             {
                 numberOfWaypoints = 0;
                 graphicsLayer.removeAll();
+                waypointCoordinates.clear();
             }
         });
     }
     
     private class MouseClickedOverlay extends MapOverlay {
-    private static final long serialVersionUID = 1L;
 
     @Override
     public void onMouseClicked(MouseEvent e) {
-      try {
+      //try {
         if (!map.isReady()) {
           return;
         }
         
-        numberOfWaypoints++;
+        else if(canSetWaypoints)
+        {
+            numberOfWaypoints++;
         
-        java.awt.Point screenPoint = e.getPoint();
-        com.esri.core.geometry.Point mapPoint = map.toMapPoint(screenPoint.x, screenPoint.y);
+            java.awt.Point screenPoint = e.getPoint();
+            com.esri.core.geometry.Point mapPoint = map.toMapPoint(screenPoint.x, screenPoint.y);
         
-        String decimalDegrees = CoordinateConversion.pointToDecimalDegrees(mapPoint, map.getSpatialReference(), 4);
+            String decimalDegrees = CoordinateConversion.pointToDecimalDegrees(mapPoint, map.getSpatialReference(), 4);
           
-        MapPointToFloatParser parser = new MapPointToFloatParser(decimalDegrees);
-        waypointCoordinates.put("Waypoint " + numberOfWaypoints, parser.parseMapPoint());
+            MapPointToFloatParser parser = new MapPointToFloatParser(decimalDegrees);
+            waypointCoordinates.put("Waypoint " + numberOfWaypoints, parser.parseMapPoint());
         
-        System.out.println("Waypoint " + numberOfWaypoints + " "+ waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(0) 
+            System.out.println("Waypoint " + numberOfWaypoints + " "+ waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(0) 
                 + "N " + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(1) + "E");
+            
+            super.onMouseClicked(e);
+        }
 
-      } finally {
-        super.onMouseMoved(e);
+      } //finally {
+        //super.onMouseClicked(e);
       }
-    }
-  }
+    //}
+  //}
 
     /**
      * This method is called from within the constructor to initialize the form.
