@@ -51,7 +51,7 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <EmptySpace min="0" pref="602" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="596" max="32767" attributes="0"/>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
@@ -75,17 +75,26 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Component id="waypointsButton" alignment="0" pref="188" max="32767" attributes="0"/>
-              <Component id="resetWaypointsButton" alignment="0" max="32767" attributes="0"/>
+              <Group type="102" attributes="0">
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Component id="startGPSButton" alignment="0" max="32767" attributes="0"/>
+                      <Component id="waypointsButton" alignment="0" pref="188" max="32767" attributes="0"/>
+                      <Component id="resetWaypointsButton" alignment="0" max="32767" attributes="0"/>
+                  </Group>
+              </Group>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="startGPSButton" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
                   <Component id="waypointsButton" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="resetWaypointsButton" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace pref="440" max="32767" attributes="0"/>
+                  <EmptySpace pref="396" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -99,6 +108,11 @@
         <Component class="javax.swing.JButton" name="resetWaypointsButton">
           <Properties>
             <Property name="text" type="java.lang.String" value="Reset Waypoints"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="startGPSButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Start GPS"/>
           </Properties>
         </Component>
       </SubComponents>

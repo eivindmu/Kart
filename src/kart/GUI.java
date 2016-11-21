@@ -7,11 +7,14 @@ package kart;
 
 import com.esri.core.geometry.CoordinateConversion;
 import com.esri.core.geometry.Polyline;
+import com.esri.core.gps.FileGPSWatcher;
+import com.esri.core.gps.IGPSWatcher;
 import com.esri.core.map.Graphic;
 import com.esri.core.symbol.SimpleLineSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.esri.core.symbol.Symbol;
 import com.esri.core.symbol.TextSymbol;
+import com.esri.map.GPSLayer;
 import com.esri.map.GraphicsLayer;
 import com.esri.map.JMap;
 import com.esri.map.LayerList;
@@ -20,7 +23,6 @@ import com.esri.map.MapOverlay;
 import com.esri.toolkit.overlays.DrawingCompleteEvent;
 import com.esri.toolkit.overlays.DrawingCompleteListener;
 import com.esri.toolkit.overlays.DrawingOverlay;
-import com.esri.toolkit.overlays.NavigatorOverlay;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
@@ -48,6 +50,9 @@ public class GUI extends javax.swing.JFrame {
     private MouseClickedOverlay mco;
     private Symbol waypoint;
     private Symbol routeLine;
+    private GPSLayer gpsLayer;
+    private IGPSWatcher gpsWatcher;
+    private LayerList layers;
 
     /**
      * Creates new form GUI
@@ -60,6 +65,7 @@ public class GUI extends javax.swing.JFrame {
             waypoint = new SimpleMarkerSymbol(Color.RED, 15, SimpleMarkerSymbol.Style.CIRCLE);
             routeLine = new SimpleLineSymbol(Color.RED, 5, SimpleLineSymbol.Style.SOLID);
             
+            this.setStartGPSButtonActionListener();
             this.setWaypointsButtonActionListener();
             this.setResetWaypointsButtonActionListener();
             this.addMapToUI();
@@ -85,11 +91,9 @@ public class GUI extends javax.swing.JFrame {
         MapOptions mapOptions = new MapOptions(MapOptions.MapType.TOPO, 62.4698, 6.2365, 14);
         map = new JMap(mapOptions);
         
-        map.addMapOverlay(new NavigatorOverlay());
-        
         graphicsLayer = new GraphicsLayer();
         
-        LayerList layers = map.getLayers();
+        layers = map.getLayers();
         layers.add(graphicsLayer);
         
         drawingOverlay = new DrawingOverlay();
@@ -120,8 +124,31 @@ public class GUI extends javax.swing.JFrame {
                         
                         Graphic lineGraphic = new Graphic(polyline, routeLine, 1);
                         graphicsLayer.addGraphic(lineGraphic);
+                        System.out.println(graphicsLayer.getNumberOfGraphics());
                     }
                 }
+            }
+        });
+    }
+    
+    private void startGPS()
+    {
+        gpsWatcher = new FileGPSWatcher("rute.txt", 1000, true);
+        gpsLayer = new GPSLayer(gpsWatcher);
+        gpsLayer.setMode(GPSLayer.Mode.OFF);
+        gpsLayer.setNavigationPointHeightFactor(0.3);
+        gpsLayer.setTrackPointSymbol(new SimpleMarkerSymbol(new Color(200, 0, 0, 200), 10, SimpleMarkerSymbol.Style.CIRCLE));
+                
+        layers.add(gpsLayer);
+    }
+    
+    private void setStartGPSButtonActionListener()
+    {
+        startGPSButton.addActionListener(new ActionListener() {
+            
+            public void actionPerformed(ActionEvent e)
+            {
+                startGPS();
             }
         });
     }
@@ -211,6 +238,7 @@ public class GUI extends javax.swing.JFrame {
         ControlPanel = new javax.swing.JPanel();
         waypointsButton = new javax.swing.JToggleButton();
         resetWaypointsButton = new javax.swing.JButton();
+        startGPSButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -218,7 +246,7 @@ public class GUI extends javax.swing.JFrame {
         MapPanel.setLayout(MapPanelLayout);
         MapPanelLayout.setHorizontalGroup(
             MapPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 602, Short.MAX_VALUE)
+            .addGap(0, 596, Short.MAX_VALUE)
         );
         MapPanelLayout.setVerticalGroup(
             MapPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -231,20 +259,29 @@ public class GUI extends javax.swing.JFrame {
 
         resetWaypointsButton.setText("Reset Waypoints");
 
+        startGPSButton.setText("Start GPS");
+
         javax.swing.GroupLayout ControlPanelLayout = new javax.swing.GroupLayout(ControlPanel);
         ControlPanel.setLayout(ControlPanelLayout);
         ControlPanelLayout.setHorizontalGroup(
             ControlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(waypointsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 188, Short.MAX_VALUE)
-            .addComponent(resetWaypointsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(ControlPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(ControlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(startGPSButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(waypointsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 188, Short.MAX_VALUE)
+                    .addComponent(resetWaypointsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         ControlPanelLayout.setVerticalGroup(
             ControlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(ControlPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(startGPSButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(waypointsButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(resetWaypointsButton)
-                .addContainerGap(440, Short.MAX_VALUE))
+                .addContainerGap(396, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -275,6 +312,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JPanel ControlPanel;
     private javax.swing.JPanel MapPanel;
     private javax.swing.JButton resetWaypointsButton;
+    private javax.swing.JButton startGPSButton;
     private javax.swing.JToggleButton waypointsButton;
     // End of variables declaration//GEN-END:variables
 }
