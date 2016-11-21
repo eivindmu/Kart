@@ -14,24 +14,28 @@ import java.util.List;
  */
 public class MapPointToFloatParser {
     
-    private String decimalDegrees;
+    private String degreesDecimalMinutes;
     private List<Float> coordinates;
     
-    public MapPointToFloatParser(String decimalDegrees)
+    public MapPointToFloatParser(String degreesDecimalMinutes)
     {
-        this.decimalDegrees = decimalDegrees;
+        this.degreesDecimalMinutes = degreesDecimalMinutes;
         this.coordinates = new ArrayList<>();
     }
     
     public List<Float> parseMapPoint()
     {
-        String northSouthCoordinate = decimalDegrees.substring(0, 7);
-        String westEastCoordinate = decimalDegrees.substring(9, 17);
-        String northSouth = decimalDegrees.substring(7, 8);
-        String westEast = decimalDegrees.substring(17, 18);
+        String northSouthCoordinate = degreesDecimalMinutes.substring(0, 10);
+        String westEastCoordinate = degreesDecimalMinutes.substring(12, 23);
+        
+        String northSouth = degreesDecimalMinutes.substring(10, 11);
+        String westEast = degreesDecimalMinutes.substring(23, 24);
+        
+        String north = northSouthCoordinate.substring(0, 2) + northSouthCoordinate.substring(3, 10);
+        String east = westEastCoordinate.substring(0, 3) + westEastCoordinate.substring(4, 11);
           
-        float ns = Float.parseFloat(northSouthCoordinate);
-        float we = Float.parseFloat(westEastCoordinate);
+        float ns = Float.parseFloat(north);
+        float we = Float.parseFloat(east);
           
         if(northSouth.toLowerCase().equals("s"))
             ns = -ns;
@@ -40,12 +44,6 @@ public class MapPointToFloatParser {
         
         coordinates.add(ns);
         coordinates.add(we);
-          
-        /*System.out.println(decimalDegrees);
-          
-        System.out.println(northSouthCoordinate + " " + westEastCoordinate);
-        System.out.println(ns + " " + we);
-        System.out.println(northSouth + " " + westEast);*/
         
         return coordinates;
     }

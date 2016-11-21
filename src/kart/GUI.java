@@ -53,6 +53,8 @@ public class GUI extends javax.swing.JFrame {
     private GPSLayer gpsLayer;
     private IGPSWatcher gpsWatcher;
     private LayerList layers;
+    private final int northCoordinate = 0;
+    private final int eastCoordinate = 1;
 
     /**
      * Creates new form GUI
@@ -111,7 +113,7 @@ public class GUI extends javax.swing.JFrame {
                 {
                     graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(10, String.valueOf(numberOfWaypoints), Color.WHITE), 1));
                     
-                    if(numberOfWaypoints > 1)
+                    /*if(numberOfWaypoints > 1)
                     {
                         Polyline polyline = new Polyline();
                         polyline.startPath(waypointCoordinates.get("Waypoint " + (numberOfWaypoints - 1)).get(1), waypointCoordinates.get("Waypoint " + (numberOfWaypoints - 1)).get(0));
@@ -125,7 +127,7 @@ public class GUI extends javax.swing.JFrame {
                         Graphic lineGraphic = new Graphic(polyline, routeLine, 1);
                         graphicsLayer.addGraphic(lineGraphic);
                         System.out.println(graphicsLayer.getNumberOfGraphics());
-                    }
+                    }*/
                 }
             }
         });
@@ -210,13 +212,13 @@ public class GUI extends javax.swing.JFrame {
             java.awt.Point screenPoint = e.getPoint();
             com.esri.core.geometry.Point mapPoint = map.toMapPoint(screenPoint.x, screenPoint.y);
         
-            String decimalDegrees = CoordinateConversion.pointToDecimalDegrees(mapPoint, map.getSpatialReference(), 4);
+            String degreesDecimalMinutes = CoordinateConversion.pointToDegreesDecimalMinutes(mapPoint, map.getSpatialReference(), 4);
           
-            MapPointToFloatParser parser = new MapPointToFloatParser(decimalDegrees);
+            MapPointToFloatParser parser = new MapPointToFloatParser(degreesDecimalMinutes);
             waypointCoordinates.put("Waypoint " + numberOfWaypoints, parser.parseMapPoint());
         
-            System.out.println("Waypoint " + numberOfWaypoints + " "+ waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(0) 
-                + "N " + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(1) + "E");
+            System.out.println("Waypoint " + numberOfWaypoints + " "+ waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate) 
+                + "N " + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate) + "E");
         }
 
       } finally {
