@@ -8,7 +8,13 @@ package kart;
 import com.esri.core.geometry.CoordinateConversion;
 import com.esri.core.geometry.Polyline;
 import com.esri.core.gps.FileGPSWatcher;
+import com.esri.core.gps.GPSEventListener;
+import com.esri.core.gps.GPSException;
+import com.esri.core.gps.GPSStatus;
+import com.esri.core.gps.GeoPosition;
 import com.esri.core.gps.IGPSWatcher;
+import com.esri.core.gps.Satellite;
+import com.esri.core.gps.SerialPortGPSWatcher;
 import com.esri.core.map.Graphic;
 import com.esri.core.symbol.SimpleLineSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol;
@@ -29,10 +35,16 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
@@ -43,6 +55,11 @@ import javax.swing.JToggleButton;
  * @author Eivind Fugledal
  */
 public class GUI extends javax.swing.JFrame {
+    
+    private static final String FSP = System.getProperty("file.separator");
+    private SimpleDateFormat sdf;
+    private Date d;
+    private String date;
     
     private JMap map;
     private GraphicsLayer graphicsLayer;
@@ -59,6 +76,7 @@ public class GUI extends javax.swing.JFrame {
     private final int northCoordinate = 0;
     private final int eastCoordinate = 1;
     private PrintWriter fileWriter;
+    private File route;
 
     /**
      * Creates new form GUI
@@ -70,7 +88,8 @@ public class GUI extends javax.swing.JFrame {
             mco = new MouseClickedOverlay();
             waypoint = new SimpleMarkerSymbol(Color.RED, 15, SimpleMarkerSymbol.Style.CIRCLE);
             routeLine = new SimpleLineSymbol(Color.RED, 5, SimpleLineSymbol.Style.SOLID);
-            fileWriter = new PrintWriter("route.txt");
+            
+            sdf = new SimpleDateFormat("HHmmss-ddMMyyyy");
             
             this.setStartGPSButtonActionListener();
             this.setWaypointsButtonActionListener();
@@ -121,24 +140,10 @@ public class GUI extends javax.swing.JFrame {
                 {
                     graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(10, String.valueOf(numberOfWaypoints), Color.WHITE), 1));
                     
-                    fileWriter.println("$GPGGA,174655.00," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate) + ",N," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate) + ",E,8,07,0,0,M,0,M,,*5F");
-                    fileWriter.println("$GPVTG,0,T,270,M,000.5,N,000.9,K,A*2F");
-                    fileWriter.println("$GPGSV,2,1,07,09,56,267,48,02,56,188,46,10,15,126,,17,30,053,43*7E");
-                    fileWriter.println("$GPGSV,2,2,07,28,15,112,32,12,32,314,38,04,66,083,49,,,,*4E");
-                    fileWriter.println("$GLGSV,2,1,08,82,44,274,47,65,09,055,,66,08,106,,79,75,243,42*6C");
-                    fileWriter.println("$GLGSV,2,2,08,81,53,006,45,80,37,324,42,88,11,046,,78,23,167,*66");
-                    fileWriter.println("$GNGSA,M,3,04,09,02,17,,,,,,,,,3.5,1.6,3.1*2A");
-                    fileWriter.println("$GNGSA,M,3,79,81,82,,,,,,,,,,3.5,1.6,3.1*2E");
-                    fileWriter.println("$GPRMC,174655.00,A," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate) + ",N," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate) + ",E,0,0,021111,0.0,E,A*2E");
-                    fileWriter.println("$GPGGA,174655.00," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate) + ",N," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate) + ",E,8,07,0,0,M,0,M,,*5F");
-                    fileWriter.println("$GPVTG,0,T,270,M,000.5,N,000.9,K,A*2F");
-                    fileWriter.println("$GPGSV,2,1,07,09,56,267,48,02,56,188,46,10,15,126,,17,30,053,43*7E");
-                    fileWriter.println("$GPGSV,2,2,07,28,15,112,32,12,32,314,38,04,66,083,49,,,,*4E");
-                    fileWriter.println("$GLGSV,2,1,08,82,44,274,47,65,09,055,,66,08,106,,79,75,243,42*6C");
-                    fileWriter.println("$GLGSV,2,2,08,81,53,006,45,80,37,324,42,88,11,046,,78,23,167,*66");
-                    fileWriter.println("$GNGSA,M,3,04,09,02,17,,,,,,,,,3.5,1.6,3.1*2A");
-                    fileWriter.println("$GNGSA,M,3,79,81,82,,,,,,,,,,3.5,1.6,3.1*2E");
-                    fileWriter.println("$GPRMC,174655.00,A," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate) + ",N," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate) + ",E,0,0,021111,0.0,E,A*2E");
+                    fileWriter.println("$GPGGA,093558.400," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate) + ",N," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate) + ",E,1,10,1.03,14.5,M,43.3,M,,*51");
+                    fileWriter.println("$GPRMC,093558.400,A," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate) + ",N," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate) + ",E,0.01,204.03,050516,,,A*67");
+
+                    fileWriter.println();
                     
                     /*if(numberOfWaypoints > 1)
                     {
@@ -162,11 +167,16 @@ public class GUI extends javax.swing.JFrame {
     
     private void startGPS()
     {
-        gpsWatcher = new FileGPSWatcher("route.txt", 1000, false);
+        try {
+            gpsWatcher = new FileGPSWatcher("logfiles" + FSP + date + ".txt", 1000, false);
+            gpsWatcher.setTimeout(20000);
+        } catch (GPSException ex) {
+            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
         gpsLayer = new GPSLayer(gpsWatcher);
         gpsLayer.setMode(GPSLayer.Mode.OFF);
         gpsLayer.setNavigationPointHeightFactor(0.3);
-        gpsLayer.setTrackPointSymbol(new SimpleMarkerSymbol(new Color(200, 0, 0, 200), 10, SimpleMarkerSymbol.Style.CIRCLE));
+        gpsLayer.setTrackPointSymbol(new SimpleMarkerSymbol(new Color(200, 0, 0, 200), 15, SimpleMarkerSymbol.Style.CIRCLE));
                 
         layers.add(gpsLayer);
     }
@@ -198,6 +208,16 @@ public class GUI extends javax.swing.JFrame {
                 attributes.put("type", "Waypoints");
                 drawingOverlay.setUp(DrawingOverlay.DrawingMode.POINT, waypoint, attributes);
                 map.addMapOverlay(mco);
+
+                d = new Date();
+                date = sdf.format(d);
+                
+                route = new File("logfiles" + FSP + date + ".txt");
+                try {
+                    fileWriter = new PrintWriter(new FileWriter(route));
+                } catch (IOException ex) {
+                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
             else
             {
@@ -220,8 +240,13 @@ public class GUI extends javax.swing.JFrame {
                 numberOfWaypoints = 0;
                 graphicsLayer.removeAll();
                 waypointCoordinates.clear();
-                //gpsLayer.removeAll();
-                gpsLayer.setShowTrail(false);
+                try {
+                    gpsWatcher.stop();
+                    gpsWatcher.dispose();
+                    gpsLayer.removeAll();
+                } catch (GPSException ex) {
+                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
     }
