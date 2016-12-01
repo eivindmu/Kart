@@ -49,6 +49,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
 import javax.swing.JToggleButton;
+import net.sf.marineapi.nmea.util.Time;
 
 /**
  *
@@ -65,7 +66,7 @@ public class GUI extends javax.swing.JFrame {
     private GraphicsLayer graphicsLayer;
     private int numberOfWaypoints = 0;
     private DrawingOverlay drawingOverlay;
-    private HashMap<String, List<Float>> waypointCoordinates;
+    private HashMap<String, List<Double>> waypointCoordinates;
     private boolean canSetWaypoints = false;
     private MouseClickedOverlay mco;
     private Symbol waypoint;
@@ -77,6 +78,7 @@ public class GUI extends javax.swing.JFrame {
     private final int eastCoordinate = 1;
     private PrintWriter fileWriter;
     private File route;
+    private NMEASentenceGenerator sentenceGenerator;
 
     /**
      * Creates new form GUI
@@ -88,6 +90,7 @@ public class GUI extends javax.swing.JFrame {
             mco = new MouseClickedOverlay();
             waypoint = new SimpleMarkerSymbol(Color.RED, 15, SimpleMarkerSymbol.Style.CIRCLE);
             routeLine = new SimpleLineSymbol(Color.RED, 5, SimpleLineSymbol.Style.SOLID);
+            sentenceGenerator = new NMEASentenceGenerator();
             
             sdf = new SimpleDateFormat("HHmmss-ddMMyyyy");
             
@@ -116,6 +119,7 @@ public class GUI extends javax.swing.JFrame {
     {
         MapOptions mapOptions = new MapOptions(MapOptions.MapType.TOPO, 62.4698, 6.2365, 14);
         map = new JMap(mapOptions);
+        map.setShowingEsriLogo(false);
         
         NavigatorOverlay navigator = new NavigatorOverlay();
         map.addMapOverlay(navigator);
@@ -140,26 +144,13 @@ public class GUI extends javax.swing.JFrame {
                 {
                     graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(10, String.valueOf(numberOfWaypoints), Color.WHITE), 1));
                     
-                    fileWriter.println("$GPGGA,093558.400," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate) + ",N," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate) + ",E,1,10,1.03,14.5,M,43.3,M,,*51");
-                    fileWriter.println("$GPRMC,093558.400,A," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate) + ",N," + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate) + ",E,0.01,204.03,050516,,,A*67");
-
-                    fileWriter.println();
+                    Date date = new Date(System.currentTimeMillis());
+                    Time time = new Time();
+                    time.setTime(date);
                     
-                    /*if(numberOfWaypoints > 1)
-                    {
-                        Polyline polyline = new Polyline();
-                        polyline.startPath(waypointCoordinates.get("Waypoint " + (numberOfWaypoints - 1)).get(1), waypointCoordinates.get("Waypoint " + (numberOfWaypoints - 1)).get(0));
-                        polyline.lineTo(waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(1), waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(0));
-                        
-                        System.out.println(waypointCoordinates.get("Waypoint " + (numberOfWaypoints - 1)).get(1) + " " + waypointCoordinates.get("Waypoint " + (numberOfWaypoints - 1)).get(0));
-                        System.out.println(waypointCoordinates.get("Waypoint " + (numberOfWaypoints)).get(1) + " " + waypointCoordinates.get("Waypoint " + (numberOfWaypoints)).get(0));
-                        
-                        System.out.println("Polyline length: " + polyline.calculateLength2D());
-                        
-                        Graphic lineGraphic = new Graphic(polyline, routeLine, 1);
-                        graphicsLayer.addGraphic(lineGraphic);
-                        System.out.println(graphicsLayer.getNumberOfGraphics());
-                    }*/
+                    sentenceGenerator.generateGPGGASentence(waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate), waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate), time);
+                    sentenceGenerator.generateGPRMCSentence(waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate), waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate), time);
+
                 }
             }
         });
@@ -267,13 +258,15 @@ public class GUI extends javax.swing.JFrame {
             java.awt.Point screenPoint = e.getPoint();
             com.esri.core.geometry.Point mapPoint = map.toMapPoint(screenPoint.x, screenPoint.y);
         
-            String degreesDecimalMinutes = CoordinateConversion.pointToDegreesDecimalMinutes(mapPoint, map.getSpatialReference(), 4);
+            //String degreesDecimalMinutes = CoordinateConversion.pointToDegreesDecimalMinutes(mapPoint, map.getSpatialReference(), 4);
+            String decimalDegrees = CoordinateConversion.pointToDecimalDegrees(mapPoint, map.getSpatialReference(), 4);
+            //System.out.println(decimalDegrees);
           
-            MapPointToFloatParser parser = new MapPointToFloatParser(degreesDecimalMinutes);
+            MapPointToDoubleParser parser = new MapPointToDoubleParser(decimalDegrees);
             waypointCoordinates.put("Waypoint " + numberOfWaypoints, parser.parseMapPoint());
         
-            System.out.println("Waypoint " + numberOfWaypoints + " "+ waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate) 
-                + "N " + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate) + "E");
+            /*System.out.println("Waypoint " + numberOfWaypoints + " "+ waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate) 
+                + "N " + waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate) + "E");*/
         }
 
       } finally {
