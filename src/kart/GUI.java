@@ -6,15 +6,9 @@
 package kart;
 
 import com.esri.core.geometry.CoordinateConversion;
-import com.esri.core.geometry.Polyline;
 import com.esri.core.gps.FileGPSWatcher;
-import com.esri.core.gps.GPSEventListener;
 import com.esri.core.gps.GPSException;
-import com.esri.core.gps.GPSStatus;
-import com.esri.core.gps.GeoPosition;
 import com.esri.core.gps.IGPSWatcher;
-import com.esri.core.gps.Satellite;
-import com.esri.core.gps.SerialPortGPSWatcher;
 import com.esri.core.map.Graphic;
 import com.esri.core.symbol.SimpleLineSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol;
@@ -36,15 +30,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
@@ -61,16 +54,15 @@ public class GUI extends javax.swing.JFrame {
     private SimpleDateFormat sdf;
     private Date d;
     private String date;
-    
     private JMap map;
     private GraphicsLayer graphicsLayer;
     private int numberOfWaypoints = 0;
     private DrawingOverlay drawingOverlay;
     private HashMap<String, List<Double>> waypointCoordinates;
+    private ArrayList<String> NMEASentences;
     private boolean canSetWaypoints = false;
     private MouseClickedOverlay mco;
     private Symbol waypoint;
-    private Symbol routeLine;
     private GPSLayer gpsLayer;
     private IGPSWatcher gpsWatcher;
     private LayerList layers;
@@ -87,9 +79,9 @@ public class GUI extends javax.swing.JFrame {
         initComponents();
         try {
             waypointCoordinates = new HashMap<>();
+            NMEASentences = new ArrayList<>();
             mco = new MouseClickedOverlay();
             waypoint = new SimpleMarkerSymbol(Color.RED, 15, SimpleMarkerSymbol.Style.CIRCLE);
-            routeLine = new SimpleLineSymbol(Color.RED, 5, SimpleLineSymbol.Style.SOLID);
             sentenceGenerator = new NMEASentenceGenerator();
             
             sdf = new SimpleDateFormat("HHmmss-ddMMyyyy");
@@ -144,16 +136,28 @@ public class GUI extends javax.swing.JFrame {
                 {
                     graphicsLayer.addGraphic(new Graphic(graphic.getGeometry(), new TextSymbol(10, String.valueOf(numberOfWaypoints), Color.WHITE), 1));
                     
-                    Date date = new Date(System.currentTimeMillis());
-                    Time time = new Time();
-                    time.setTime(date);
-                    
-                    sentenceGenerator.generateGPGGASentence(waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate), waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate), time);
-                    sentenceGenerator.generateGPRMCSentence(waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate), waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate), time);
-
+                    makeNMEASentences();
                 }
             }
         });
+    }
+    
+    private void makeNMEASentences()
+    {
+        Date date = new Date(System.currentTimeMillis());
+        Time time = new Time();
+        time.setTime(date);
+
+        String gga;
+        String rmc;
+
+        gga = sentenceGenerator.generateGPGGASentence(waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate),
+                waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate), time);
+        rmc = sentenceGenerator.generateGPRMCSentence(waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(northCoordinate),
+                waypointCoordinates.get("Waypoint " + numberOfWaypoints).get(eastCoordinate), time);
+
+        NMEASentences.add(gga);
+        NMEASentences.add(rmc);
     }
     
     private void startGPS()
@@ -231,6 +235,7 @@ public class GUI extends javax.swing.JFrame {
                 numberOfWaypoints = 0;
                 graphicsLayer.removeAll();
                 waypointCoordinates.clear();
+                NMEASentences.clear();
                 try {
                     gpsWatcher.stop();
                     gpsWatcher.dispose();

@@ -33,7 +33,7 @@ public class NMEASentenceGenerator {
      * @param longitude Longitude in decimal degrees
      * @param time Current time
      */
-    public void generateGPGGASentence(double latitude, double longitude, Time time)
+    public String generateGPGGASentence(double latitude, double longitude, Time time)
     {
         GGASentence gga = (GGASentence) sf.createParser(TalkerId.GP, "GGA");
         Position pos = new Position(latitude, longitude);
@@ -42,6 +42,8 @@ public class NMEASentenceGenerator {
         gga.setPosition(pos);
         
         System.out.println(gga.toSentence());
+        
+        return gga.toSentence();
     }
     
     /**
@@ -50,7 +52,7 @@ public class NMEASentenceGenerator {
      * @param longitude Longitude in decimal degrees
      * @param time Current time
      */
-    public void generateGPRMCSentence(double latitude, double longitude, Time time)
+    public String generateGPRMCSentence(double latitude, double longitude, Time time)
     {
         RMCSentence rmc = (RMCSentence) sf.createParser(TalkerId.GP, "RMC");
         Position pos = new Position(latitude, longitude);
@@ -61,6 +63,8 @@ public class NMEASentenceGenerator {
         rmc.setDate(date);
         
         System.out.println(rmc.toSentence());
+        
+        return rmc.toSentence();
     }
     
 }
